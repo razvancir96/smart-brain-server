@@ -1,22 +1,15 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
-
-const database = [{
-	id: 1,
-	name: 'razvan',
-	email: 'razvan@gmail.com',
-	password: 'razvan',
-	entries: 0,
-	creation_date: '2019-01-01'
-}, {
-	id: 2,
-	name: 'diana',
-	email: 'diana@gmail.com',
-	password: 'diana',
-	entries: 0,
-	creation_date: '2019-02-02'
-}]
+const knex = require('knex')({
+  client: 'pg',
+  connection: {
+    host : 'localhost',
+    user : 'postgres',
+    password : 'root',
+    database : 'smart_brain_app'
+  }
+});
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -28,62 +21,86 @@ app.get('/', (req, res) => {
 
 // signin endpoint
 app.post('/signin', (req, res) => {
-	// we try to find the person from the request in our db
-	const matchingElement = database.find((elem) => {
-		return elem.email === req.body.email && elem.password === req.body.password;
-	});
-	if (matchingElement === undefined) {
-		res.send('fail');
-	} else {
-		res.send(JSON.stringify({id: matchingElement.id}));
-	}
+	// search for user password combination
+	knex('users').where({
+	  email: req.body.email,
+	}).select()
+	.then(matchingUser => {
+		if (matchingUser.length === 0) {
+			res.send('fail');
+		} else {
+			bcrypt.compare(req.body.password, matchingUser[0].password, function(error, result) {
+			    if (result) {
+			    	res.send(JSON.stringify({id: matchingUser[0].id}));
+			    } else {
+			    	res.send('fail');
+			    }
+			});
+		}
+	})
 })
 
+// register endpoint
 app.post('/register', (req, res) => {
 	// we're searching for the enetered email in our database
-	const nameExists = database.some((elem) => {
-		return elem.email === req.body.email;
-	})
-	if (nameExists) {
-		res.send('fail');
-	} else {
-		// first we insert, then we send response
-		database.push({
-			id: database.length,
-			name: req.body.name,
-			email: req.body.email,
-			password: req.body.password,
-			entries: 0,
-			creation_date: new Date()
-		})
-		res.send('succes');
-	}
+	knex('users').where({
+	  email: req.body.email,
+	}).select()
+	.then(nameExists => {
+		if (nameExists.length !== 0) {
+			res.send('fail');
+		} else {
+			// hash the entered password
+			bcrypt.hash(req.body.password, 12, function(err, hash) {
+			 // first we insert, then we send response
+				knex('users')
+				.returning('id')
+				.insert([{name: req.body.name,
+					email: req.body.email,
+					password: hash}])
+				.then(returnedArray => {
+					if (returnedArray.length === 0) {
+						res.send('fail');
+					} else {
+						res.send('succes');
+					}
+				});
+			});
+		}
+	})	
 })
 
+// get user profile
 app.get('/profile/:id', (req, res) => {
-	const matchingElement = database.find((elem) => {
-		return elem.id === Number(req.params.id);
-	});
-	if (matchingElement === undefined) {
-		res.send('fail');
-	} else {
-		res.send(JSON.stringify({
-			name: matchingElement.name,
-			entries: matchingElement.entries
-		}));
-	}
+	knex('users').where({
+	  id: Number(req.params.id),
+	}).select()
+	.then(user => {
+		if (user.length === 0) {
+			res.send('fail');
+		} else {
+			res.send(JSON.stringify({
+				name: user[0].name,
+				entries: user[0].entries
+			}));
+		}
+	})
 })
 
+// update entries
 app.put('/image', (req, res) => {
-	const matchingElement = database.find((elem) => {
-		return elem.id === Number(req.body.id);
-	});
-	if (matchingElement === undefined) {
-		res.send('fail');
-	} else {
-		database[req.body.id-1].entries += 1;
-		res.send(JSON.stringify({entries: matchingElement.entries + 1}));
-	}
+	knex('users')
+  	.where({ 
+  		id: Number(req.body.id) 
+  	})
+  	.increment('entries', 1)
+  	.then(result => {
+  		if (result === 0) {
+  			res.send('fail');
+  		} else {
+  			res.send('success');
+  		}
+  	});
 })
 
 app.listen(3000);
