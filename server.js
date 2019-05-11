@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
+const cors = require('cors');
 const knex = require('knex')({
   client: 'pg',
   connection: {
@@ -14,6 +15,7 @@ const knex = require('knex')({
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(cors());
 
 app.get('/', (req, res) => {
 	res.send('signin');
@@ -60,9 +62,9 @@ app.post('/register', (req, res) => {
 					password: hash}])
 				.then(returnedArray => {
 					if (returnedArray.length === 0) {
-						res.send('fail');
+						res.json('fail');
 					} else {
-						res.send('succes');
+						res.json('success');
 					}
 				});
 			});
@@ -80,6 +82,7 @@ app.get('/profile/:id', (req, res) => {
 			res.send('fail');
 		} else {
 			res.send(JSON.stringify({
+				id: user[0].id,
 				name: user[0].name,
 				entries: user[0].entries
 			}));
