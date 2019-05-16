@@ -25,7 +25,9 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // just a greet message
-app.get('/', res.json('It is working!'));
+app.get('/', (req, res) => {
+  res.json('It is working!');
+});
 // signin endpoint
 app.post('/signin', [
   check('email').isEmail().normalizeEmail(),
