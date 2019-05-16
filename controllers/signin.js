@@ -1,4 +1,9 @@
-const handleSignIn = (req, res, knex, bcrypt) => {
+const handleSignIn = (req, res, knex, bcrypt, validationResult) => {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		return res.json('fail');
+	}
+
 	// search for user password combination
 	knex('users').where({
 	  email: req.body.email,

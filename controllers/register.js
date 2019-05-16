@@ -1,4 +1,9 @@
-const handleRegister = (req, res, knex, bcrypt) => {
+const handleRegister = (req, res, knex, bcrypt, validationResult) => {
+	const errors = validationResult(req);
+	if (!errors.isEmpty()) {
+		return res.json('fail');
+	}
+
 	// we're searching for the enetered email in our database
 	knex('users').where({
 	  email: req.body.email,
