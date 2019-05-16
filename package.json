@@ -4,7 +4,7 @@
   "description": "Backend server written in Node.js, providing endpoints used by smart-brain-app.",
   "main": "server.js",
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "node server.js"
   },
   "repository": {
     "type": "git",
