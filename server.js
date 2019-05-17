@@ -10,13 +10,10 @@ const { check, validationResult } = require('express-validator/check');
 const knex = require('knex')({
   client: 'pg',
   connection: {
-    host : 'localhost',
-    user : 'postgres',
-    password : 'root',
-    database : 'smart_brain_app'
+    connectionString: process.env.DATABASE_URL,
+    ssl: true
   }
 });
-
 
 const app = express();
 // middleware
