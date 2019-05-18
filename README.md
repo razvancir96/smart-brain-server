@@ -10,3 +10,5 @@ Alternatively, you can clone this repo and run the following commands:
 
 - npm start
 
+server.js is the main file, while each endpoint implememntation can pe found in the controllers folder. script.sql is the file run in the Heroku database, that the server uses.
+
